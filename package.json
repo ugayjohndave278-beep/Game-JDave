@@ -1,0 +1,16 @@
+{
+  "name": "kitchen-battle-sync",
+  "version": "1.0.0",
+  "description": "Real-time sync server for Kitchen Battle Dashboard",
+  "main": "sync-server.js",
+  "scripts": {
+    "start": "node sync-server.js",
+    "dev": "node sync-server.js"
+  },
+  "keywords": ["websocket", "sync", "realtime"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ws": "^8.13.0"
+  }
+}
