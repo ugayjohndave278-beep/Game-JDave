@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kitchen Battle Dashboard</title>
+    <style>
+        @keyframes tilt {
+            0%, 100% { transform: rotate(-8deg); }
+            50% { transform: rotate(8deg); }
+        }
+        .tilt-animation {
+            animation: tilt 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .bounce-animation {
+            animation: bounce 1s ease-in-out infinite;
+        }
+        .face-shape {
+            width: 60px;
+            height: 60px;
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            object-fit: cover;
+            object-position: center 20%;
+            transform: scale(1.3);
+        }
+        
+        /* Forest Background */
+        body {
+            background: 
+                linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.1) 50%),
+                radial-gradient(ellipse at top, #4A90A4 0%, #3A7088 50%),
+                linear-gradient(to bottom, #5DADE2 0%, #48856B 40%, #2E5D3A 70%, #1A3321 100%);
+            position: relative;
+            overflow-x: hidden;
+            margin: 0;
+            padding: 32px;
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(ellipse at 20% 80%, rgba(255,255,255,0.05) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(255,255,255,0.03) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        /* Utility Classes */
+        .text-center { text-align: center; }
+        .font-bold { font-weight: bold; }
+        .font-semibold { font-weight: 600; }
+        .rounded-lg { border-radius: 0.5rem; }
+        .rounded-xl { border-radius: 0.75rem; }
+        .rounded-full { border-radius: 9999px; }
+        .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+        .shadow-xl { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); }
+        .shadow-md { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+        .transition-all { transition: all 0.3s; }
+        .transition-colors { transition: color 0.3s, background-color 0.3s; }
+        .cursor-pointer { cursor: pointer; }
+        
+        button {
+            cursor: pointer;
+            border: none;
+            outline: none;
+        }
+        
+        button:hover {
+            transform: scale(1.02);
+        }
+        
+        input {
+            outline: none;
+        }
+        
+        input:focus {
+            border-color: #0284c7;
+        }
+        
+        .forest-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+        
+        .tree {
+            position: absolute;
+            bottom: 0;
+        }
+        
+        .trunk {
+            position: absolute;
+            bottom: 0;
+            background: 
+                linear-gradient(90deg, 
+                    #3D2817 0%, 
+                    #4A3419 15%,
+                    #5C4520 30%,
+                    #654321 50%,
+                    #5C4520 70%,
+                    #4A3419 85%,
+                    #3D2817 100%
+                );
+            border-radius: 8px 8px 0 0;
+            box-shadow: 
+                inset -3px 0 6px rgba(0,0,0,0.4),
+                inset 3px 0 6px rgba(255,255,255,0.1),
+                2px 0 8px rgba(0,0,0,0.5);
+        }
+        
+        .trunk::before {
+            content: '';
+            position: absolute;
+            top: 10%;
+            left: 5%;
+            width: 90%;
+            height: 80%;
+            background: 
+                repeating-linear-gradient(
+                    180deg,
+                    transparent 0px,
+                    transparent 8px,
+                    rgba(0,0,0,0.1) 8px,
+                    rgba(0,0,0,0.1) 10px
+                );
+            border-radius: 5px;
+        }
+        
+        .leaf {
+            position: absolute;
+            background: 
+                radial-gradient(ellipse at 30% 30%, #90EE90 0%, #228B22 40%, #006400 80%, #003300 100%);
+            border-radius: 50%;
+            transform-origin: center;
+            box-shadow: 
+                inset -5px -5px 15px rgba(0,0,0,0.4),
+                inset 5px 5px 15px rgba(255,255,255,0.2),
+                0 8px 16px rgba(0,0,0,0.4);
+            filter: saturate(1.2) contrast(1.1);
+        }
+        
+        .leaf::before {
+            content: '';
+            position: absolute;
+            top: 20%;
+            left: 20%;
+            width: 60%;
+            height: 60%;
+            background: radial-gradient(ellipse at center, rgba(255,255,255,0.3) 0%, transparent 50%);
+            border-radius: 50%;
+        }
+        
+        @keyframes sway1 {
+            0%, 100% { transform: translateX(0) rotate(0deg); }
+            25% { transform: translateX(-3px) rotate(-2deg); }
+            75% { transform: translateX(3px) rotate(2deg); }
+        }
+        
+        @keyframes sway2 {
+            0%, 100% { transform: translateX(0) rotate(0deg); }
+            30% { transform: translateX(4px) rotate(3deg); }
+            70% { transform: translateX(-4px) rotate(-3deg); }
+        }
+        
+        @keyframes sway3 {
+            0%, 100% { transform: translateX(0) rotate(0deg); }
+            20% { transform: translateX(-2px) rotate(-1deg); }
+            60% { transform: translateX(2px) rotate(1deg); }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .leaf-cluster-1 { animation: sway1 4s ease-in-out infinite; }
+        .leaf-cluster-2 { animation: sway2 5s ease-in-out infinite; }
+        .leaf-cluster-3 { animation: sway3 3.5s ease-in-out infinite; }
+        
+        .floating-leaf {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: 
+                linear-gradient(135deg, 
+                    #7CFC00 0%, 
+                    #32CD32 30%, 
+                    #228B22 60%, 
+                    #006400 100%
+                );
+            border-radius: 0 50% 50% 50%;
+            animation: float 3s ease-in-out infinite;
+            opacity: 0.8;
+            box-shadow: 
+                inset -2px -2px 4px rgba(0,0,0,0.3),
+                inset 2px 2px 4px rgba(255,255,255,0.2),
+                0 4px 8px rgba(0,0,0,0.3);
+            transform: rotate(45deg);
+        }
+        
+        .floating-leaf::before {
+            content: '';
+            position: absolute;
+            top: 25%;
+            left: 25%;
+            width: 50%;
+            height: 50%;
+            background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, transparent 70%);
+            border-radius: 0 50% 50% 50%;
+        }
+        
+        #app {
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Responsive Mobile Styles */
+        @media (max-width: 768px) {
+            body {
+                padding: 16px;
+            }
+            
+            .forest-bg {
+                display: none; /* Hide forest on mobile for performance */
+            }
+            
+            /* Make grids stack vertically */
+            .dashboard-grid {
+                grid-template-columns: 1fr !important;
+                gap: 24px !important;
+            }
+            
+            .settings-grid {
+                grid-template-columns: 1fr !important;
+            }
+            
+            /* Adjust font sizes */
+            .main-title {
+                font-size: 2rem !important;
+            }
+            
+            .subtitle {
+                font-size: 1rem !important;
+            }
+            
+            .group-name {
+                font-size: 1.25rem !important;
+            }
+            
+            .total-score {
+                font-size: 2rem !important;
+            }
+            
+            /* Adjust bar chart */
+            .bar-chart-container {
+                height: 300px !important;
+                padding: 12px !important;
+            }
+            
+            .bar-column {
+                width: 60px !important;
+            }
+            
+            .bar {
+                width: 50px !important;
+            }
+            
+            /* Button adjustments */
+            .button-container {
+                flex-direction: column !important;
+                width: 100%;
+            }
+            
+            .button-container button {
+                width: 100%;
+            }
+            
+            /* Hide chef backgrounds on mobile */
+            .chef-background {
+                display: none !important;
+            }
+                        
+            /* Adjust padding */
+            .main-card {
+                padding: 20px !important;
+            }
+            
+            .category-icon {
+                font-size: 1.5rem !important;
+            }
+            
+            .scoring-button-grid {
+                grid-template-columns: 1fr !important;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <!-- Animated Forest Background -->
+    <div class="forest-bg">
+        <!-- Tree 1 - Left -->
+        <div class="tree" style="left: 5%; width: 80px;">
+            <div class="trunk" style="left: 30px; width: 20px; height: 200px;"></div>
+            <div class="leaf leaf-cluster-1" style="left: 10px; top: 50px; width: 60px; height: 60px;"></div>
+            <div class="leaf leaf-cluster-2" style="left: 5px; top: 20px; width: 70px; height: 70px;"></div>
+            <div class="leaf leaf-cluster-3" style="left: 15px; top: 80px; width: 50px; height: 50px;"></div>
+        </div>
+        
+        <!-- Tree 2 - Left Center -->
+        <div class="tree" style="left: 15%; width: 100px;">
+            <div class="trunk" style="left: 40px; width: 25px; height: 250px;"></div>
+            <div class="leaf leaf-cluster-2" style="left: 15px; top: 30px; width: 70px; height: 70px;"></div>
+            <div class="leaf leaf-cluster-1" style="left: 10px; top: 60px; width: 80px; height: 80px;"></div>
+            <div class="leaf leaf-cluster-3" style="left: 20px; top: 100px; width: 60px; height: 60px;"></div>
+        </div>
+        
+        <!-- Tree 3 - Right Center -->
+        <div class="tree" style="right: 18%; width: 90px;">
+            <div class="trunk" style="left: 35px; width: 22px; height: 220px;"></div>
+            <div class="leaf leaf-cluster-3" style="left: 10px; top: 40px; width: 70px; height: 70px;"></div>
+            <div class="leaf leaf-cluster-1" style="left: 5px; top: 10px; width: 80px; height: 80px;"></div>
+            <div class="leaf leaf-cluster-2" style="left: 15px; top: 70px; width: 60px; height: 60px;"></div>
+        </div>
+        
+        <!-- Tree 4 - Right -->
+        <div class="tree" style="right: 5%; width: 75px;">
+            <div class="trunk" style="left: 28px; width: 20px; height: 180px;"></div>
+            <div class="leaf leaf-cluster-1" style="left: 8px; top: 30px; width: 60px; height: 60px;"></div>
+            <div class="leaf leaf-cluster-3" style="left: 12px; top: 60px; width: 50px; height: 50px;"></div>
+        </div>
+        
+        <!-- Floating Leaves -->
+        <div class="floating-leaf" style="left: 20%; top: 30%; animation-delay: 0s;"></div>
+        <div class="floating-leaf" style="left: 40%; top: 25%; animation-delay: 1s;"></div>
+        <div class="floating-leaf" style="left: 60%; top: 35%; animation-delay: 0.5s;"></div>
+        <div class="floating-leaf" style="left: 80%; top: 20%; animation-delay: 1.5s;"></div>
+        <div class="floating-leaf" style="left: 30%; top: 50%; animation-delay: 2s;"></div>
+        <div class="floating-leaf" style="left: 70%; top: 45%; animation-delay: 2.5s;"></div>
+    </div>
+
+    <div id="app"></div>
+
+    <script>
+        const app = {
+            view: 'dashboard',
+            showSettings: false,
+            maxPoints: 100,
+            leftGroupName: 'Island Feast',
+            rightGroupName: 'Luau Kitchen',
+            scoringCategories: [
+                { 
+                    key: 'sop', 
+                    label: 'SOP (Standard Operating Procedures)', 
+                    icon: '📋',
+                    subcategories: [
+                        { key: 'uniformDress', label: 'Uniform & Dress Code' },
+                        { key: 'timekeeping', label: 'Timekeeping & Punctuality' },
+                        { key: 'hygiene', label: 'Personal Hygiene' }
+                    ]
+                },
+                { 
+                    key: 'safety', 
+                    label: 'Safety', 
+                    icon: '🛡️',
+                    subcategories: [
+                        { key: 'foodHandling', label: 'Food Handling' },
+                        { key: 'equipmentUse', label: 'Equipment Use' },
+                        { key: 'cleanliness', label: 'Workspace Cleanliness' }
+                    ]
+                },
+                { 
+                    key: 'policies', 
+                    label: 'Policies', 
+                    icon: '📜',
+                    subcategories: [
+                        { key: 'compliance', label: 'Policy Compliance' },
+                        { key: 'documentation', label: 'Documentation' },
+                        { key: 'communication', label: 'Communication' }
+                    ]
+                },
+                { 
+                    key: 'processes', 
+                    label: 'Processes', 
+                    icon: '⚙️',
+                    subcategories: [
+                        { key: 'efficiency', label: 'Efficiency' },
+                        { key: 'quality', label: 'Quality Control' },
+                        { key: 'consistency', label: 'Consistency' }
+                    ]
+                },
+                { 
+                    key: 'culture', 
+                    label: 'Culture', 
+                    icon: '🤝',
+                    subcategories: [
+                        { key: 'teamwork', label: 'Teamwork' },
+                        { key: 'attitude', label: 'Positive Attitude' },
+                        { key: 'respect', label: 'Respect & Aloha Spirit' }
+                    ]
+                },
+                { 
+                    key: 'performance', 
+                    label: 'Performance', 
+                    icon: '⭐',
+                    subcategories: [
+                        { key: 'speed', label: 'Speed & Timeliness' },
+                        { key: 'accuracy', label: 'Accuracy' },
+                        { key: 'initiative', label: 'Initiative & Innovation' }
+                    ]
+                }
+            ],
+            leftTeams: [
+                { name: 'Kalua Crew', score: 0, photo: null, members: [
+                    { name: 'Member 1', scores: { 
+                        sop: { uniformDress: 0, timekeeping: 0, hygiene: 0, total: 0 },
+                        safety: { foodHandling: 0, equipmentUse: 0, cleanliness: 0, total: 0 },
+                        policies: { compliance: 0, documentation: 0, communication: 0, total: 0 },
+                        processes: { efficiency: 0, quality: 0, consistency: 0, total: 0 },
+                        culture: { teamwork: 0, attitude: 0, respect: 0, total: 0 },
+                        performance: { speed: 0, accuracy: 0, initiative: 0, total: 0 }
+                    } },
+                    { name: 'Member 2', scores: { 
+                        sop: { uniformDress: 0, timekeeping: 0, hygiene: 0, total: 0 },
+                        safety: { foodHandling: 0, equipmentUse: 0, cleanliness: 0, total: 0 },
+                        policies: { compliance: 0, documentation: 0, communication: 0, total: 0 },
+                        processes: { efficiency: 0, quality: 0, consistency: 0, total: 0 },
+                        culture: { teamwork: 0, attitude: 0, respect: 0, total: 0 },
+                        performance: { speed: 0, accuracy: 0, initiative: 0, total: 0 }
+                    } },
+                    { name: 'Member 3', scores: { 
+                        sop: { uniformDress: 0, timekeeping: 0, hygiene: 0, total: 0 },
+                        safety: { foodHandling: 0, equipmentUse: 0, cleanliness: 0, total: 0 },
+                        policies: { compliance: 0, documentation: 0, communication: 0, total: 0 },
+                        processes: { efficiency: 0, quality: 0, consistency: 0, total: 0 },
+                        culture: { teamwork: 0, attitude: 0, respect: 0, total: 0 },
+                        performance: { speed: 0, accuracy: 0, initiative: 0, total: 0 }
+                    } }
+                ]},
+                { name: 'Poke Masters', score: 0, photo: null, members: [
+                    { name: 'Member 1', scores: { sop: 0, safety: 0, policies: 0, processes: 0, culture: 0, performance: 0 } },
+                    { name: 'Member 2', scores: { sop: 0, safety: 0, policies: 0, processes: 0, culture: 0, performance: 0 } },
+                    { name: 'Member 3', scores: { sop: 0, safety: 0, policies: 0, processes: 0, culture: 0, performance: 0 } }
+                ]},
+                { name: 'Laulau Team', score: 0, photo: null, members: [
+                    { name: 'Member 1', scores: { sop: 0, safety: 0, policies: 0, processes: 0, culture: 0, performance: 0 } },
+                    { name: 'Member 2', scores: { sop: 0, safety: 0, policies: 0, processes: 0, culture: 0, performance: 0 } },
+                    { name: 'Member 3', scores: { sop: 0, safety: 0, policies: 0, processes: 0, culture: 0, performance: 0 } }
+                ]},
+                { name: 'Haupia Squad', score: 0, photo: null, members: [
+                    { name: 'Member 1', scores: { sop: 0, safety: 0, policies: 0, processes: 0, culture: 0, performance: 0 } },
+                    { name: 'Member 2', scores: { sop: 0, safety: 0, policies: 0, processes: 0, culture: 0, performance: 0 } },
+                    { name: 'Member 3', scores: { sop: 0, safety: 0, policies: 0, processes: 0, culture: 0, performance: 0 } }
+                ]},
+                { name: 'Imu Pit', score: 0, photo: null, members: [
+                    { name: 'Member 1', scores: { sop: 0, safety: 0, policies: 0, processes: 0, culture: 0, performance: 0 } },
+                    { name: 'Member 2', scores: { sop: 0, safety: 0, policies: 0, processes: 0, culture: 0, performance: 0 } },
+                    { name: 'Member 3', scores: { sop: 0, safety: 0, policies: 0, processes: 0, culture: 0, performance: 0 } }
+                ]}
+            ],
+            rightTeams: [
+                { name: 'Poi Prep', score: 0, photo: null, members: [
+                    { name: 'Member 1', scores: { sop: 0, safety: 0, policies: 0, processes: 0, culture: 0, performance: 0 } },
+                    { name: 'Member 2', scores: { sop: 0, safety: 0, policies: 0, processes: 0, culture: 0, performance: 0 } },
+                    { name: 'Member 3', scores: { sop: 0, safety: 0, policies: 0, processes: 0, culture: 0, performance: 0 } }
+                ]},
+                { name: 'Taro Team', score: 0, photo: null, members: [
+                    { name: 'Member 1', scores: { sop: 0, safety: 0, policies: 0, processes: 0, culture: 0, performance: 0 } },
+                    { name: 'Member 2', scores: { sop: 0, safety: 0, policies: 0, processes: 0, culture: 0, performance: 0 } },
+                    { name: 'Member 3', scores: { sop: 0, safety: 0, policies: 0, processes: 0, culture: 0, performance: 0 } }
+                ]},
+                { name: 'Coconut Crew', score: 0, photo: null, members: [
+                    { name: 'Member 1', scores: { sop: 0, safety: 0, policies: 0, processes: 0, culture: 0, performance: 0 } },
+                    { name: 'Member 2', scores: { sop: 0, safety: 0, policies: 0, processes: 0, culture: 0, performance: 0 } },
+                    { name: 'Member 3', scores: { sop: 0, safety: 0, policies: 0, processes: 0, culture: 0, performance: 0 } }
+                ]},
+                { name: 'Ahi Station', score: 0, photo: null, members: [
+                    { name: 'Member 1', scores: { sop: 0, safety: 0, policies: 0, processes: 0, culture: 0, performance: 0 } },
+                    { name: 'Member 2', scores: { sop: 0, safety: 0, policies: 0, processes: 0, culture: 0, performance: 0 } },
+                    { name: 'Member 3', scores: { sop: 0, safety: 0, policies: 0, processes: 0, culture: 0, performance: 0 } }
+                ]},
+                { name: 'Lomilomi Line', score: 0, photo: null, members: [
+                    { name: 'Member 1', scores: { sop: 0, safety: 0, policies: 0, processes: 0, culture: 0, performance: 0 } },
+                    { name: 'Member 2', scores: { sop: 0, safety: 0, policies: 0, processes: 0, culture: 0, performance: 0 } },
+                    { name: 'Member 3', scores: { sop: 0, safety: 0, policies: 0, processes: 0, culture: 0, performance: 0 } }
+                ]}
+            ],
+            selectedKitchen: null,
+            selectedTeam: null,
+            selectedMember: null,
+            scoringStep: 1
+        };
+
+        function getTotalScore(teams) {
+            return teams.reduce((sum, team) => sum + team.score, 0);
+        }
+
+        function getTopContributors(side) {
+            const teams = side === 'left' ? app.leftTeams : app.rightTeams;
+            const allMembers = [];
+            
+            teams.forEach(team => {
+                team.members.forEach(member => {
+                    const memberTotal = Object.values(member.scores).reduce((sum, category) => {
+                        return sum + (typeof category === 'object' ? category.total : category);
+                    }, 0);
+                    if (memberTotal > 0) {
+                        allMembers.push({
+                            member: member.name,
+                            team: team.name,
+                            score: memberTotal
+                        });
+                    }
+                });
+            });
+            
+            return allMembers.sort((a, b) => b.score - a.score).slice(0, 3);
+        }
+
+        function updateSubcategoryScore(category, subcategory, points) {
+            const teams = app.selectedKitchen === 'left' ? app.leftTeams : app.rightTeams;
+            const team = teams[app.selectedTeam];
+            const member = team.members[app.selectedMember];
+            
+            // Initialize category if it doesn't exist
+            if (!member.scores[category]) {
+                member.scores[category] = { total: 0 };
+            }
+            
+            // Initialize subcategory if it doesn't exist
+            if (member.scores[category][subcategory] === undefined) {
+                member.scores[category][subcategory] = 0;
+            }
+            
+            member.scores[category][subcategory] += points;
+            
+            // Recalculate total for this category
+            member.scores[category].total = Object.keys(member.scores[category])
+                .filter(k => k !== 'total')
+                .reduce((sum, k) => sum + (member.scores[category][k] || 0), 0);
+            
+            team.score = team.members.reduce((sum, m) => {
+                return sum + Object.values(m.scores).reduce((mSum, cat) => {
+                    return mSum + (typeof cat === 'object' ? cat.total : cat);
+                }, 0);
+            }, 0);
+            
+            render();
+        }
+
+        function updateMemberScore(category, points) {
+            const teams = app.selectedKitchen === 'left' ? app.leftTeams : app.rightTeams;
+            const team = teams[app.selectedTeam];
+            const member = team.members[app.selectedMember];
+            
+            if (typeof member.scores[category] === 'object') {
+                member.scores[category].total += points;
+            } else {
+                member.scores[category] += points;
+            }
+            
+            team.score = team.members.reduce((sum, m) => {
+                return sum + Object.values(m.scores).reduce((mSum, cat) => {
+                    return mSum + (typeof cat === 'object' ? cat.total : cat);
+                }, 0);
+            }, 0);
+            
+            render();
+        }
+
+        function addMember(teamIndex, side) {
+            const teams = side === 'left' ? app.leftTeams : app.rightTeams;
+            teams[teamIndex].members.push({
+                name: `Member ${teams[teamIndex].members.length + 1}`,
+                scores: { 
+                    sop: { uniformDress: 0, timekeeping: 0, hygiene: 0, total: 0 },
+                    safety: { foodHandling: 0, equipmentUse: 0, cleanliness: 0, total: 0 },
+                    policies: { compliance: 0, documentation: 0, communication: 0, total: 0 },
+                    processes: { efficiency: 0, quality: 0, consistency: 0, total: 0 },
+                    culture: { teamwork: 0, attitude: 0, respect: 0, total: 0 },
+                    performance: { speed: 0, accuracy: 0, initiative: 0, total: 0 }
+                }
+            });
+            render();
+        }
+
+        function removeMember(teamIndex, memberIndex, side) {
+            const teams = side === 'left' ? app.leftTeams : app.rightTeams;
+            if (teams[teamIndex].members.length > 1) {
+                teams[teamIndex].members.splice(memberIndex, 1);
+                render();
+            }
+        }
+
+        function updateMemberName(teamIndex, memberIndex, side, newName) {
+            const teams = side === 'left' ? app.leftTeams : app.rightTeams;
+            teams[teamIndex].members[memberIndex].name = newName;
+        }
+
+        function addSubcategory(categoryIndex) {
+            const newKey = 'sub' + Date.now();
+            app.scoringCategories[categoryIndex].subcategories.push({
+                key: newKey,
+                label: 'New Subcategory'
+            });
+            render();
+        }
+
+        function removeSubcategory(categoryIndex, subIndex) {
+            if (app.scoringCategories[categoryIndex].subcategories.length > 1) {
+                app.scoringCategories[categoryIndex].subcategories.splice(subIndex, 1);
+                render();
+            }
+        }
+
+        function updateSubcategoryLabel(categoryIndex, subIndex, newLabel) {
+            app.scoringCategories[categoryIndex].subcategories[subIndex].label = newLabel;
+        }
+
+        function updateCategoryLabel(categoryIndex, newLabel) {
+            app.scoringCategories[categoryIndex].label = newLabel;
+        }
+
+        function updateCategoryIcon(categoryIndex, newIcon) {
+            app.scoringCategories[categoryIndex].icon = newIcon;
+        }
+
+        function handlePhotoUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const teams = app.selectedKitchen === 'left' ? app.leftTeams : app.rightTeams;
+                    teams[app.selectedTeam].photo = e.target.result;
+                    render();
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function render() {
+            const totalLeft = getTotalScore(app.leftTeams);
+            const totalRight = getTotalScore(app.rightTeams);
+            const topLeft = getTopContributors('left');
+            const topRight = getTopContributors('right');
+
+            let html = '';
+
+            if (app.view === 'dashboard') {
+                html = `
+                    <div style="max-width: 112rem; margin: 0 auto;">
+                        ${app.showSettings ? renderSettings() : renderDashboard(totalLeft, totalRight, topLeft, topRight)}
+                    </div>
+                `;
+            } else {
+                html = renderScoring();
+            }
+
+            document.getElementById('app').innerHTML = html;
+        }
+
+        function renderDashboard(totalLeft, totalRight, topLeft, topRight) {
+            const maxScore = Math.max(...app.leftTeams.map(t => t.score), ...app.rightTeams.map(t => t.score), app.maxPoints);
+            const leader = totalLeft > totalRight ? app.leftGroupName : totalRight > totalLeft ? app.rightGroupName : 'Tie';
+            
+            return `
+                <div class="text-center" style="margin-bottom: 32px; position: relative;">
+                    <div style="background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.85) 100%); padding: 24px 48px; border-radius: 20px; display: inline-block; box-shadow: 0 8px 32px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.8); max-width: 90%;">
+                        <h1 class="main-title" style="font-size: 3.75rem; font-weight: bold; color: #115e59; margin-bottom: 8px; position: relative; z-index: 1; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">🌺 PCC Kitchen Battle 🌊</h1>
+                        <p class="subtitle" style="font-size: 1.25rem; color: #0d9488; font-weight: 600; position: relative; z-index: 1;">Polynesian Cultural Center Performance Dashboard</p>
+                    </div>
+                    ${leader !== 'Tie' ? `
+                        <div style="display: inline-block; background: linear-gradient(to right, #fbbf24, #fb923c); color: #1f2937; padding: 12px 32px; border-radius: 9999px; font-weight: bold; font-size: 1.25rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255,255,255,0.3); margin-top: 16px; position: relative; z-index: 1; max-width: 90%;">
+                            🏆 ${leader} is Currently Leading
+                        </div>
+                    ` : ''}
+                </div>
+
+                <div class="button-container" style="display: flex; gap: 16px; justify-content: center; margin-bottom: 32px;">
+                    <button onclick="app.view='scoring'; app.scoringStep=1; app.selectedKitchen=null; app.selectedTeam=null; app.selectedMember=null; render();" style="background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); color: white; padding: 16px 32px; border-radius: 12px; font-weight: 600; font-size: 1.125rem; box-shadow: 0 8px 24px rgba(20, 184, 166, 0.4), inset 0 1px 0 rgba(255,255,255,0.2);">
+                        📊 Team Leader Scoring
+                    </button>
+                    <button onclick="app.showSettings=!app.showSettings; render();" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 16px 32px; border-radius: 12px; font-weight: 600; font-size: 1.125rem; box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4), inset 0 1px 0 rgba(255,255,255,0.2);">
+                        ⚙️ Settings
+                    </button>
+                </div>
+
+                <div class="main-card" style="background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%); border-radius: 24px; box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3), 0 10px 20px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.8); padding: 48px; border: 1px solid rgba(255,255,255,0.5); position: relative;">
+                    <div style="position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #14b8a6 0%, #3b82f6 100%); border-radius: 24px 24px 0 0;"></div>
+                    <div class="dashboard-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 48px;">
+                        <!-- Island Feast -->
+                        <div>
+                            <div style="margin-bottom: 24px; text-align: center;">
+                                <div style="display: inline-flex; align-items: center; gap: 16px; background: linear-gradient(135deg, #f97316 0%, #dc2626 100%); color: white; padding: 16px 32px; border-radius: 16px; box-shadow: 0 8px 24px rgba(220, 38, 38, 0.4), inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.2); position: relative; overflow: hidden; max-width: 100%;">
+                                    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%); pointer-events: none;"></div>
+                                    <div style="width: 48px; height: 48px; background: linear-gradient(145deg, #ffffff 0%, #f0f0f0 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.5); position: relative; z-index: 1; flex-shrink: 0;">
+                                        <span style="font-size: 1.75rem; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));">🔥</span>
+                                    </div>
+                                    <h2 class="group-name" style="font-size: 2rem; font-weight: bold; margin: 0; position: relative; z-index: 1; text-shadow: 0 2px 4px rgba(0,0,0,0.3); word-break: break-word;">${app.leftGroupName}</h2>
+                                </div>
+                            </div>
+                            <div style="background: linear-gradient(135deg, #f97316 0%, #dc2626 100%); color: white; border-radius: 16px; padding: 24px; text-align: center; margin-bottom: 24px; box-shadow: 0 8px 24px rgba(220, 38, 38, 0.4), inset 0 2px 4px rgba(255,255,255,0.2), inset 0 -2px 4px rgba(0,0,0,0.2); position: relative; overflow: hidden;">
+                                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%); pointer-events: none;"></div>
+                                <div class="total-score" style="font-size: 3rem; font-weight: bold; position: relative; z-index: 1; text-shadow: 0 4px 8px rgba(0,0,0,0.4);">${totalLeft}</div>
+                                <div style="font-size: 0.875rem; font-weight: 600; opacity: 0.95; position: relative; z-index: 1; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">Total Points</div>
+                            </div>
+                            <div class="bar-chart-container" style="border: 3px solid #cbd5e1; border-radius: 16px; padding: 20px; background: linear-gradient(145deg, #f8fafc 0%, #e2e8f0 100%); box-shadow: inset 0 2px 8px rgba(0,0,0,0.1), 0 4px 12px rgba(0,0,0,0.15); height: 400px; position: relative;">
+                                ${topLeft.length > 0 ? `
+                                    <div style="font-size: 0.75rem; color: #334155; margin-bottom: 12px; text-align: center; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 10px; border-radius: 12px; border: 2px solid #f59e0b; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3), inset 0 1px 0 rgba(255,255,255,0.5);">
+                                        <div style="font-weight: 700; margin-bottom: 4px; font-size: 0.875rem; text-shadow: 0 1px 2px rgba(0,0,0,0.1);">Top Contributors</div>
+                                        ${topLeft.map(c => `<div style="margin-bottom: 2px; text-shadow: 0 1px 2px rgba(0,0,0,0.05);">⭐ ${c.member} (${c.team}) - ${c.score}pts</div>`).join('')}
+                                    </div>
+                                ` : ''}
+                                <div style="display: flex; justify-content: space-around; align-items: flex-end; height: ${topLeft.length > 0 ? 'calc(100% - 80px)' : '100%'};">
+                                    ${app.leftTeams.map((team, idx) => {
+                                        const heightPercent = maxScore > 0 ? (team.score / maxScore) * 100 : 1;
+                                        const maxBarHeight = topLeft.length > 0 ? 240 : 330;
+                                        const barHeight = Math.max((heightPercent / 100) * maxBarHeight, 5);
+                                        return `
+                                                                                            <div class="bar-column" style="display: flex; flex-direction: column; align-items: center; justify-content: flex-end; width: 80px;">
+                                                ${team.photo ? `
+                                                    <div class="bounce-animation" style="margin-bottom: 4px;">
+                                                        <img src="${team.photo}" alt="Team Leader" class="face-shape tilt-animation" style="border: 3px solid #f97316; background: white;" />
+                                                    </div>
+                                                ` : ''}
+                                                <div class="bar" style="position: relative; width: 60px; height: ${barHeight}px; transition: all 0.5s;">
+                                                    <div style="position: absolute; bottom: 0; width: 100%; height: 100%; background: linear-gradient(to top, #f97316 0%, #fb923c 30%, #dc2626 100%); border-radius: 12px 12px 0 0; box-shadow: 0 -4px 12px rgba(249, 115, 22, 0.4), inset 0 2px 4px rgba(255,255,255,0.3), inset 0 -2px 4px rgba(0,0,0,0.2); position: relative; overflow: hidden;">
+                                                        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 30%; background: linear-gradient(to bottom, rgba(255,255,255,0.4) 0%, transparent 100%);"></div>
+                                                        <div style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 70%; height: 20px; background: radial-gradient(ellipse at center, rgba(255,255,255,0.5) 0%, transparent 70%); filter: blur(4px);"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: space-around; margin-top: 12px;">
+                                ${app.leftTeams.map((team, idx) => {
+                                    return `
+                                        <div style="width: 80px;">
+                                            <div style="text-align: center; font-size: 0.75rem; font-weight: 600; color: #374151; margin-bottom: 4px; line-height: 1.25; height: 32px; display: flex; align-items: center; justify-content: center;">${team.name}</div>
+                                            <div style="text-align: center; font-size: 1.25rem; font-weight: bold; color: #f97316; height: 28px; display: flex; align-items: center; justify-content: center;">${team.score}</div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+
+                        <!-- Luau Kitchen -->
+                        <div>
+                            <div style="margin-bottom: 24px; text-align: center;">
+                                <div style="display: inline-flex; align-items: center; gap: 16px; background: linear-gradient(135deg, #14b8a6 0%, #3b82f6 100%); color: white; padding: 16px 32px; border-radius: 16px; box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4), inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.2); position: relative; overflow: hidden;">
+                                    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%); pointer-events: none;"></div>
+                                    <div style="width: 48px; height: 48px; background: linear-gradient(145deg, #ffffff 0%, #f0f0f0 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.5); position: relative; z-index: 1;">
+                                        <span style="font-size: 1.75rem; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));">🌊</span>
+                                    </div>
+                                    <h2 style="font-size: 2rem; font-weight: bold; margin: 0; position: relative; z-index: 1; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">${app.rightGroupName}</h2>
+                                </div>
+                            </div>
+                            <div style="background: linear-gradient(135deg, #14b8a6 0%, #3b82f6 100%); color: white; border-radius: 16px; padding: 24px; text-align: center; margin-bottom: 24px; box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4), inset 0 2px 4px rgba(255,255,255,0.2), inset 0 -2px 4px rgba(0,0,0,0.2); position: relative; overflow: hidden;">
+                                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%); pointer-events: none;"></div>
+                                <div style="font-size: 3rem; font-weight: bold; position: relative; z-index: 1; text-shadow: 0 4px 8px rgba(0,0,0,0.4);">${totalRight}</div>
+                                <div style="font-size: 0.875rem; font-weight: 600; opacity: 0.95; position: relative; z-index: 1; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">Total Points</div>
+                            </div>
+                            <div style="border: 3px solid #cbd5e1; border-radius: 16px; padding: 20px; background: linear-gradient(145deg, #f8fafc 0%, #e2e8f0 100%); box-shadow: inset 0 2px 8px rgba(0,0,0,0.1), 0 4px 12px rgba(0,0,0,0.15); height: 400px; position: relative;">
+                                ${topRight.length > 0 ? `
+                                    <div style="font-size: 0.75rem; color: #334155; margin-bottom: 12px; text-align: center; background: linear-gradient(135deg, #ccfbf1 0%, #99f6e4 100%); padding: 10px; border-radius: 12px; border: 2px solid #14b8a6; box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3), inset 0 1px 0 rgba(255,255,255,0.5);">
+                                        <div style="font-weight: 700; margin-bottom: 4px; font-size: 0.875rem; text-shadow: 0 1px 2px rgba(0,0,0,0.1);">Top Contributors</div>
+                                        ${topRight.map(c => `<div style="margin-bottom: 2px; text-shadow: 0 1px 2px rgba(0,0,0,0.05);">⭐ ${c.member} (${c.team}) - ${c.score}pts</div>`).join('')}
+                                    </div>
+                                ` : ''}
+                                <div style="display: flex; justify-content: space-around; align-items: flex-end; height: ${topRight.length > 0 ? 'calc(100% - 80px)' : '100%'};">
+                                    ${app.rightTeams.map((team, idx) => {
+                                        const heightPercent = maxScore > 0 ? (team.score / maxScore) * 100 : 1;
+                                        const maxBarHeight = topRight.length > 0 ? 240 : 330;
+                                        const barHeight = Math.max((heightPercent / 100) * maxBarHeight, 5);
+                                        return `
+                                            <div style="display: flex; flex-direction: column; align-items: center; justify-content: flex-end; width: 80px;">
+                                                ${team.photo ? `
+                                                    <div class="bounce-animation" style="margin-bottom: 4px;">
+                                                        <img src="${team.photo}" alt="Team Leader" class="face-shape tilt-animation" style="border: 3px solid #14b8a6; background: white;" />
+                                                    </div>
+                                                ` : ''}
+                                                <div style="position: relative; width: 60px; height: ${barHeight}px; transition: all 0.5s;">
+                                                    <div style="position: absolute; bottom: 0; width: 100%; height: 100%; background: linear-gradient(to top, #14b8a6 0%, #5eead4 30%, #3b82f6 100%); border-radius: 12px 12px 0 0; box-shadow: 0 -4px 12px rgba(20, 184, 166, 0.4), inset 0 2px 4px rgba(255,255,255,0.3), inset 0 -2px 4px rgba(0,0,0,0.2); position: relative; overflow: hidden;">
+                                                        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 30%; background: linear-gradient(to bottom, rgba(255,255,255,0.4) 0%, transparent 100%);"></div>
+                                                        <div style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 70%; height: 20px; background: radial-gradient(ellipse at center, rgba(255,255,255,0.5) 0%, transparent 70%); filter: blur(4px);"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: space-around; margin-top: 12px;">
+                                ${app.rightTeams.map((team, idx) => {
+                                    return `
+                                        <div style="width: 80px;">
+                                            <div style="text-align: center; font-size: 0.75rem; font-weight: 600; color: #374151; margin-bottom: 4px; line-height: 1.25; height: 32px; display: flex; align-items: center; justify-content: center;">${team.name}</div>
+                                            <div style="text-align: center; font-size: 1.25rem; font-weight: bold; color: #14b8a6; height: 28px; display: flex; align-items: center; justify-content: center;">${team.score}</div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderSettings() {
+            return `
+                <div style="background: white; border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); padding: 32px;">
+                    <h2 style="font-size: 1.875rem; font-weight: bold; color: #1f2937; margin-bottom: 24px;">Settings & Team Management</h2>
+                    
+                    <div style="margin-bottom: 24px; padding: 16px; background: #ccfbf1; border: 2px solid #5eead4; border-radius: 8px;">
+                        <label style="display: block; font-size: 1.125rem; font-weight: 600; margin-bottom: 8px; color: #115e59;">Maximum Points (Graph Scale)</label>
+                        <input type="number" value="${app.maxPoints}" onchange="app.maxPoints=parseInt(this.value) || 100; render();" style="width: 192px; padding: 8px 16px; border: 2px solid #14b8a6; border-radius: 8px; font-size: 1.125rem; font-weight: bold;" min="10" step="10" />
+                        <p style="font-size: 0.875rem; color: #6b7280; margin-top: 8px;">Set the maximum value for the bar chart scale. Bars will scale relative to this value.</p>
+                    </div>
+
+                    <div class="settings-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
+                        <div>
+                            <label style="display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 8px; color: #374151;">Left Group Name</label>
+                            <input type="text" value="${app.leftGroupName}" onchange="app.leftGroupName=this.value; render();" style="width: 100%; padding: 8px 16px; border: 2px solid #d1d5db; border-radius: 8px;" />
+                            <div style="margin-top: 24px; display: grid; gap: 16px;">
+                                <h3 style="font-weight: 600; color: #374151;">Teams & Members</h3>
+                                ${app.leftTeams.map((team, tIdx) => `
+                                    <div style="border: 1px solid #d1d5db; border-radius: 8px; padding: 16px; background: #f9fafb;">
+                                        <input type="text" value="${team.name}" onchange="app.leftTeams[${tIdx}].name=this.value; render();" style="width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 4px; margin-bottom: 12px; font-weight: 600;" />
+                                        <div style="margin-left: 16px; display: grid; gap: 8px;">
+                                            ${team.members.map((member, mIdx) => `
+                                                <div style="display: flex; align-items: center; gap: 8px;">
+                                                    <span style="color: #6b7280; font-size: 0.875rem;">${mIdx + 1}.</span>
+                                                    <input type="text" value="${member.name}" onchange="updateMemberName(${tIdx}, ${mIdx}, 'left', this.value)" style="flex: 1; padding: 4px 12px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.875rem;" />
+                                                    <button onclick="removeMember(${tIdx}, ${mIdx}, 'left')" style="color: #ef4444; font-size: 0.875rem; padding: 4px 8px; background: none;">✕</button>
+                                                </div>
+                                            `).join('')}
+                                            <button onclick="addMember(${tIdx}, 'left')" style="color: #3b82f6; font-size: 0.875rem; font-weight: 600; background: none; padding: 4px 0; text-align: left;">+ Add Member</button>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 8px; color: #374151;">Right Group Name</label>
+                            <input type="text" value="${app.rightGroupName}" onchange="app.rightGroupName=this.value; render();" style="width: 100%; padding: 8px 16px; border: 2px solid #d1d5db; border-radius: 8px;" />
+                            <div style="margin-top: 24px; display: grid; gap: 16px;">
+                                <h3 style="font-weight: 600; color: #374151;">Teams & Members</h3>
+                                ${app.rightTeams.map((team, tIdx) => `
+                                    <div style="border: 1px solid #d1d5db; border-radius: 8px; padding: 16px; background: #f9fafb;">
+                                        <input type="text" value="${team.name}" onchange="app.rightTeams[${tIdx}].name=this.value; render();" style="width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 4px; margin-bottom: 12px; font-weight: 600;" />
+                                        <div style="margin-left: 16px; display: grid; gap: 8px;">
+                                            ${team.members.map((member, mIdx) => `
+                                                <div style="display: flex; align-items: center; gap: 8px;">
+                                                    <span style="color: #6b7280; font-size: 0.875rem;">${mIdx + 1}.</span>
+                                                    <input type="text" value="${member.name}" onchange="updateMemberName(${tIdx}, ${mIdx}, 'right', this.value)" style="flex: 1; padding: 4px 12px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.875rem;" />
+                                                    <button onclick="removeMember(${tIdx}, ${mIdx}, 'right')" style="color: #ef4444; font-size: 0.875rem; padding: 4px 8px; background: none;">✕</button>
+                                                </div>
+                                            `).join('')}
+                                            <button onclick="addMember(${tIdx}, 'right')" style="color: #3b82f6; font-size: 0.875rem; font-weight: 600; background: none; padding: 4px 0; text-align: left;">+ Add Member</button>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 32px; text-align: center;">
+                        <button onclick="app.showSettings=false; render();" style="background: linear-gradient(to right, #14b8a6, #3b82f6); color: white; padding: 12px 32px; border-radius: 8px; font-weight: 600; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);">
+                            Back to Dashboard
+                        </button>
+                    </div>
+
+                    <!-- Scoring Categories Section -->
+                    <div style="margin-top: 48px; padding-top: 32px; border-top: 2px solid #d1d5db;">
+                        <h2 style="font-size: 1.875rem; font-weight: bold; color: #1f2937; margin-bottom: 24px;">Scoring Categories & Subcategories</h2>
+                        <div style="display: grid; gap: 24px;">
+                            ${app.scoringCategories.map((cat, catIdx) => `
+                                <div style="border: 2px solid #5eead4; border-radius: 12px; padding: 24px; background: #f0fdfa;">
+                                    <div style="display: grid; grid-template-columns: 60px 1fr; gap: 16px; margin-bottom: 16px;">
+                                        <div>
+                                            <label style="display: block; font-size: 0.75rem; font-weight: 600; margin-bottom: 4px; color: #374151;">Icon</label>
+                                            <input type="text" value="${cat.icon}" onchange="updateCategoryIcon(${catIdx}, this.value); render();" style="width: 50px; padding: 4px 8px; border: 1px solid #d1d5db; border-radius: 4px; text-align: center; font-size: 1.5rem;" />
+                                        </div>
+                                        <div>
+                                            <label style="display: block; font-size: 0.75rem; font-weight: 600; margin-bottom: 4px; color: #374151;">Category Name</label>
+                                            <input type="text" value="${cat.label}" onchange="updateCategoryLabel(${catIdx}, this.value); render();" style="width: 100%; padding: 8px 12px; border: 2px solid #14b8a6; border-radius: 8px; font-weight: 600;" />
+                                        </div>
+                                    </div>
+                                    <div style="margin-left: 24px;">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                            <h4 style="font-weight: 600; color: #115e59; margin: 0;">Subcategories</h4>
+                                            <button onclick="addSubcategory(${catIdx})" style="background: #14b8a6; color: white; padding: 6px 16px; border-radius: 6px; font-size: 0.875rem; font-weight: 600;">+ Add Subcategory</button>
+                                        </div>
+                                        <div style="display: grid; gap: 8px;">
+                                            ${cat.subcategories.map((sub, subIdx) => `
+                                                <div style="display: flex; align-items: center; gap: 8px; background: white; padding: 8px 12px; border-radius: 8px; border: 1px solid #99f6e4;">
+                                                    <span style="color: #6b7280; font-size: 0.875rem; min-width: 20px;">${subIdx + 1}.</span>
+                                                    <input type="text" value="${sub.label}" onchange="updateSubcategoryLabel(${catIdx}, ${subIdx}, this.value); render();" style="flex: 1; padding: 6px 12px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.875rem;" />
+                                                    <button onclick="removeSubcategory(${catIdx}, ${subIdx})" style="color: #ef4444; font-size: 1rem; padding: 4px 8px; background: none; font-weight: bold;">✕</button>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderScoring() {
+            let content = '';
+
+            if (app.scoringStep === 1) {
+                content = `
+                    <p style="font-size: 1.25rem; text-align: center; margin-bottom: 24px; color: #374151; font-weight: 500;">Select Your Kitchen</p>
+                    <div class="scoring-button-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 48rem; margin: 0 auto;">
+                        <button onclick="app.selectedKitchen='left'; app.scoringStep=2; render();" style="background: linear-gradient(135deg, #f97316, #dc2626); color: white; padding: 40px; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
+                            <div style="font-size: 3.75rem; margin-bottom: 12px;">🔥</div>
+                            <div style="font-size: 1.875rem; font-weight: bold;">${app.leftGroupName}</div>
+                        </button>
+                        <button onclick="app.selectedKitchen='right'; app.scoringStep=2; render();" style="background: linear-gradient(135deg, #14b8a6, #3b82f6); color: white; padding: 40px; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
+                            <div style="font-size: 3.75rem; margin-bottom: 12px;">🌊</div>
+                            <div style="font-size: 1.875rem; font-weight: bold;">${app.rightGroupName}</div>
+                        </button>
+                    </div>
+                `;
+            } else if (app.scoringStep === 2) {
+                const teams = app.selectedKitchen === 'left' ? app.leftTeams : app.rightTeams;
+                const colorFrom = app.selectedKitchen === 'left' ? '#f97316' : '#14b8a6';
+                const colorTo = app.selectedKitchen === 'left' ? '#dc2626' : '#3b82f6';
+                content = `
+                    <button onclick="app.scoringStep=1; app.selectedKitchen=null; render();" style="margin-bottom: 16px; color: #0d9488; font-weight: 600; background: none; padding: 0;">← Back to Kitchen Selection</button>
+                    <p style="font-size: 1.25rem; text-align: center; margin-bottom: 24px; color: #374151; font-weight: 500;">Select Your Team from <span style="font-weight: bold;">${app.selectedKitchen === 'left' ? app.leftGroupName : app.rightGroupName}</span></p>
+                    <div style="display: grid; gap: 16px; max-width: 48rem; margin: 0 auto;">
+                        ${teams.map((team, idx) => `
+                            <button onclick="app.selectedTeam=${idx}; app.scoringStep=3; render();" style="background: linear-gradient(to right, ${colorFrom}, ${colorTo}); color: white; padding: 24px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); text-align: left;">
+                                <div style="font-size: 1.5rem; font-weight: bold;">${team.name}</div>
+                                <div style="font-size: 0.875rem; opacity: 0.9; margin-top: 8px;">Current Score: ${team.score} points</div>
+                            </button>
+                        `).join('')}
+                    </div>
+                `;
+            } else if (app.scoringStep === 3) {
+                const teams = app.selectedKitchen === 'left' ? app.leftTeams : app.rightTeams;
+                const team = teams[app.selectedTeam];
+                const colorFrom = app.selectedKitchen === 'left' ? '#f97316' : '#14b8a6';
+                const colorTo = app.selectedKitchen === 'left' ? '#dc2626' : '#3b82f6';
+                content = `
+                    <button onclick="app.scoringStep=2; app.selectedTeam=null; render();" style="margin-bottom: 16px; color: #0d9488; font-weight: 600; background: none; padding: 0;">← Back to Team Selection</button>
+                    <p style="font-size: 1.25rem; text-align: center; margin-bottom: 24px; color: #374151; font-weight: 500;">Select a Member from <span style="font-weight: bold;">${team.name}</span></p>
+                    <div style="display: grid; gap: 16px; max-width: 48rem; margin: 0 auto;">
+                        ${team.members.map((member, idx) => {
+                            const memberTotal = Object.values(member.scores).reduce((sum, category) => {
+                                return sum + (typeof category === 'object' ? category.total : category);
+                            }, 0);
+                            return `
+                                <button onclick="app.selectedMember=${idx}; app.scoringStep=4; render();" style="background: linear-gradient(to right, ${colorFrom}, ${colorTo}); color: white; padding: 24px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); text-align: left;">
+                                    <div style="font-size: 1.5rem; font-weight: bold;">${member.name}</div>
+                                    <div style="font-size: 0.875rem; opacity: 0.9; margin-top: 8px;">Total Score: ${memberTotal} points</div>
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+            } else if (app.scoringStep === 4) {
+                const teams = app.selectedKitchen === 'left' ? app.leftTeams : app.rightTeams;
+                const team = teams[app.selectedTeam];
+                const member = team.members[app.selectedMember];
+                
+                content = `
+                    <button onclick="app.scoringStep=3; app.selectedMember=null; render();" style="margin-bottom: 16px; color: #0d9488; font-weight: 600; background: none; padding: 0;">← Back to Member Selection</button>
+                    <div style="text-align: center; margin-bottom: 32px;">
+                        <p style="font-size: 1.5rem; color: #1f2937; font-weight: bold;">Scoring for ${member.name}</p>
+                        <p style="font-size: 0.875rem; color: #6b7280; margin-top: 8px;">Team: ${team.name}</p>
+                    </div>
+                    <div style="display: grid; gap: 16px; max-width: 64rem; margin: 0 auto;">
+                        ${app.scoringCategories.map(cat => `
+                            <div style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 2px solid #5eead4;">
+                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <span style="font-size: 2rem;">${cat.icon}</span>
+                                        <span style="font-weight: 600; color: #1f2937; font-size: 1.125rem;">${cat.label}</span>
+                                    </div>
+                                    <div style="font-size: 2rem; font-weight: bold; color: #0d9488;">${member.scores[cat.key] ? member.scores[cat.key].total : 0}</div>
+                                </div>
+                                <div style="margin-left: 56px; display: grid; gap: 12px;">
+                                    ${cat.subcategories.map(sub => `
+                                        <div style="background: #f0fdfa; padding: 12px; border-radius: 8px; border: 1px solid #99f6e4;">
+                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                                <span style="font-weight: 500; color: #115e59; font-size: 0.875rem;">${sub.label}</span>
+                                                <span style="font-weight: bold; color: #0d9488; font-size: 1.25rem;">${member.scores[cat.key] && member.scores[cat.key][sub.key] !== undefined ? member.scores[cat.key][sub.key] : 0}</span>
+                                            </div>
+                                            <div style="display: flex; gap: 8px; justify-content: center;">
+                                                <button onclick="updateSubcategoryScore('${cat.key}', '${sub.key}', 1)" style="background: #10b981; color: white; padding: 6px 20px; border-radius: 8px; font-weight: 600; font-size: 0.875rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">+1</button>
+                                                <button onclick="updateSubcategoryScore('${cat.key}', '${sub.key}', 5)" style="background: #059669; color: white; padding: 6px 20px; border-radius: 8px; font-weight: 600; font-size: 0.875rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">+5</button>
+                                                <button onclick="updateSubcategoryScore('${cat.key}', '${sub.key}', -1)" style="background: #ef4444; color: white; padding: 6px 20px; border-radius: 8px; font-weight: 600; font-size: 0.875rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">-1</button>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div style="margin-top: 32px; text-align: center;">
+                        <button onclick="app.view='dashboard'; render();" style="background: linear-gradient(to right, #14b8a6, #3b82f6); color: white; padding: 16px 40px; border-radius: 8px; font-weight: bold; font-size: 1.125rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);">Done Scoring</button>
+                    </div>
+                `;
+            }
+
+            return `
+                <div style="max-width: 112rem; margin: 0 auto;">
+                    <button onclick="app.view='dashboard'; render();" style="margin-bottom: 24px; color: #0d9488; font-weight: 600; font-size: 1.125rem; background: none; padding: 0;">← Back to Dashboard</button>
+                    <div style="background: white; border-radius: 16px; padding: 40px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); border: 4px solid #5eead4;">
+                        <h2 style="font-size: 2.25rem; font-weight: bold; color: #115e59; margin-bottom: 32px; text-align: center;">🌺 Team Leader Scoring 🌺</h2>
+                        ${content}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Initial render
+        render();
+    </script>
+</body>
+</html>
