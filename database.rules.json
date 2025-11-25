@@ -1,0 +1,9 @@
+{
+  "rules": {
+    "app": {
+      ".read": true,
+      ".write": true,
+      ".validate": "newData.hasChildren(['view', 'showSettings', 'maxPoints', 'leftGroupName', 'rightGroupName', 'scoringCategories', 'leftTeams', 'rightTeams', 'selectedKitchen', 'selectedTeam', 'selectedMember', 'scoringStep'])"
+    }
+  }
+}
